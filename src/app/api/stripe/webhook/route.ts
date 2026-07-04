@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { stripe, isStripeConfigured } from "@/lib/stripe";
 import { db } from "@/lib/db";
 import { subscriptions } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import Stripe from "stripe";
 
 export async function POST(req: Request) {
+  if (!isStripeConfigured) {
+    return NextResponse.json(
+      { error: "Stripe is not configured." },
+      { status: 503 }
+    );
+  }
+
   const body = await req.text();
   const signature = req.headers.get("stripe-signature");
 
@@ -34,7 +41,6 @@ export async function POST(req: Request) {
         const packageId = session.metadata?.packageId;
 
         if (userId && packageId) {
-          // Cancel previous active subscription
           await db
             .update(subscriptions)
             .set({ status: "cancelled", cancelledAt: new Date() })
