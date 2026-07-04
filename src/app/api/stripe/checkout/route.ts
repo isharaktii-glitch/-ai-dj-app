@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { stripe } from "@/lib/stripe";
+import { stripe, isStripeConfigured } from "@/lib/stripe";
 import { db } from "@/lib/db";
 import { packages, subscriptions, users } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -42,7 +42,6 @@ export async function POST(req: Request) {
     }
 
     if (pkg.priceMonthlyCents === 0) {
-      // Free package — assign directly, no Stripe needed
       await db
         .update(subscriptions)
         .set({ status: "cancelled", cancelledAt: new Date() })
@@ -62,7 +61,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, free: true });
     }
 
-    // Find or create a Stripe customer for this user
+    if (!isStripeConfigured) {
+      return NextResponse.json(
+        {
+          error:
+            "Payments are not configured yet. Please contact the site admin.",
+        },
+        { status: 503 }
+      );
+    }
+
     const existingSub = await db
       .select()
       .from(subscriptions)
