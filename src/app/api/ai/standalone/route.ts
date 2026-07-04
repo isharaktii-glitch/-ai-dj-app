@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { aiGenerationJobs } from "@/lib/db/schema";
 import { checkLimit, logUsage } from "@/lib/limits";
 import { generateTrack } from "@/lib/ai-music";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 const requestSchema = z.object({
@@ -68,7 +69,7 @@ export async function POST(req: Request) {
       await db
         .update(aiGenerationJobs)
         .set({ status: "processing", providerJobId })
-        .where((j) => j.id === job.id as any);
+        .where(eq(aiGenerationJobs.id, job.id));
     } catch (providerErr) {
       console.error("AI provider call failed:", providerErr);
       await db
@@ -80,7 +81,7 @@ export async function POST(req: Request) {
               ? providerErr.message
               : "Unknown provider error",
         })
-        .where((j) => j.id === job.id as any);
+        .where(eq(aiGenerationJobs.id, job.id));
 
       return NextResponse.json(
         { error: "Failed to start AI generation. Please try again shortly." },
@@ -93,7 +94,8 @@ export async function POST(req: Request) {
     return NextResponse.json({
       success: true,
       jobId: job.id,
-      message: "Generation started. Your track will appear in your library once ready.",
+      message:
+        "Generation started. Your track will appear in your library once ready.",
     });
   } catch (err) {
     console.error("Standalone AI generation error:", err);
