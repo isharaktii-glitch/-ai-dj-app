@@ -1,13 +1,3 @@
-/**
- * Client for a third-party Suno API provider (e.g. Apiframe, EvoLink).
- * Suno itself has no official public API — we go through a reseller.
- * Set SUNO_PROVIDER_BASE_URL and SUNO_PROVIDER_API_KEY in your env vars.
- *
- * This module intentionally wraps the provider behind a simple interface
- * (generateTrack / getJobStatus) so swapping providers later only means
- * editing this one file.
- */
-
 const BASE_URL = process.env.SUNO_PROVIDER_BASE_URL || "";
 const API_KEY = process.env.SUNO_PROVIDER_API_KEY || "";
 
@@ -108,10 +98,6 @@ export async function getJobStatus(
   };
 }
 
-/**
- * Builds a Suno prompt from analyzed characteristics of a source track,
- * so the generated companion track matches its BPM/key/energy/genre.
- */
 export function buildMatchPrompt(source: {
   bpm?: number | null;
   musicalKey?: string | null;
@@ -137,4 +123,3 @@ export function buildMatchPrompt(source: {
 
   return `Create a ${parts.join(", ")}.`;
 }
-</parameter>
